@@ -7,12 +7,10 @@ import scala.concurrent._
 import scala.concurrent.duration._
 
 object SimpleTextQuery extends App {
-	val settings = ImmutableSettings.settingsBuilder()
-			.put("cluster.name", "elasticsearch_drew")
-			.build()
-	val client = ElasticClient.remote(settings, ("127.0.0.1", 9300))
-	val r = client.execute {
-	  search in "logstash-2013.11.10" query "first"
+
+	val r = SimpleApp.client.execute {
+//	  search in "logstash-2013.11.10" query "first"
+	  search in "cre" query "the news"
 	}
 	Await.ready(r, 10 seconds)
 	println(r.value)
