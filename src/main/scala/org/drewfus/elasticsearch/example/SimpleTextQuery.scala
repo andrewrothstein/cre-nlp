@@ -1,14 +1,12 @@
+package org.drewfus.elasticsearch.example
+
 import com.sksamuel.elastic4s.ElasticClient
 import com.sksamuel.elastic4s.ElasticDsl._
-
 import org.elasticsearch.common.settings.ImmutableSettings
-
 import scala.concurrent._
 import scala.concurrent.duration._
 
-import ExecutionContext.Implicits.global
-
-object Fiddle extends App {
+object SimpleTextQuery extends App {
 	val settings = ImmutableSettings.settingsBuilder()
 			.put("cluster.name", "elasticsearch_drew")
 			.build()
