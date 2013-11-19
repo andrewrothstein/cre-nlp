@@ -3,12 +3,15 @@ package org.drewfus.cre
 import dispatch._
 import dispatch.Defaults._
 import com.sksamuel.elastic4s.ElasticClient
+import akka.actor._
 
+case class CostarCrawlRequest(esClient: ElasticClient, rssURL :String)
 
-case class CostarCrawler(client: ElasticClient) {
+class CostarCrawler extends Actor {
 
-  def crawl = {
-	  val rssFeed = url("http://www.costar.com/News/RSS/RSS.aspx")
+  def receive = {
+    case CostarCrawlRequest(esClient, rssURL) =>
+      val rssFeed = url(rssURL)
 	  val rssResponse = Http(rssFeed OK as.xml.Elem)
 	  for (rss <- rssResponse) yield {
 	    for (i <- rss \\ "item") {
