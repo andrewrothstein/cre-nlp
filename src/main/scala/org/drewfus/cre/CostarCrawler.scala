@@ -29,14 +29,10 @@ class CostarCrawler extends Actor with ActorLogging {
 
   private def alreadyIndexedDoc(esClient: ElasticClient, link: String) = {
     val r = esClient.sync.execute {
-      search in "cre" query {
-        bool {
-          must(term("link", link))
-        }
-      }
+      get id link from "cre/webpages"
     }
-    log.info("hits for " + link + ": " + r.getHits.getTotalHits)
-    r.getHits.getTotalHits > 0
+    log.info("hits for " + link + ": " + r.isExists())
+    r.isExists()
   }
 
   def receive = {
@@ -58,7 +54,7 @@ class CostarCrawler extends Actor with ActorLogging {
             for (doc <- dl) {
               val esResponse = esClient.bulk {
                 index into "costar-rss-success" source ObjectSource(crawledItem)
-                index into "cre" fields ("link" -> crawledItem.link, "page" -> doc)
+                index into "cre/webpages" id crawledItem.link fields ("page" -> doc)
               }
               for (r <- esResponse) {
                 log.info("downloaded and indexed " + crawledItem.title)
@@ -70,7 +66,7 @@ class CostarCrawler extends Actor with ActorLogging {
             dl.onFailure {
               case _ =>
                 esClient.execute {
-                  index into "costart-rss-failures" source ObjectSource(crawledItem)
+                  index into "costar-rss-failures" source ObjectSource(crawledItem)
                 }
                 sender ! CrawlFailed(crawledItem)
             }

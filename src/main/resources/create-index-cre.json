@@ -22,10 +22,6 @@
   "mappings": {
     "webpages": {
       "properties": {
-        "link": {
-          "type": "string",
-          "store": "yes"
-        },
         "page": {
           "type": "string",
           "analyzer": "my_html_analyzer"
