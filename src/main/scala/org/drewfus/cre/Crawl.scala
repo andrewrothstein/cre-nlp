@@ -3,6 +3,7 @@ package org.drewfus.cre
 import com.sksamuel.elastic4s.ElasticClient
 import org.elasticsearch.common.settings.ImmutableSettings
 import akka.actor._
+import scala.concurrent.duration._
 
 object Crawl extends App {
 
@@ -15,7 +16,8 @@ object Crawl extends App {
     
   val system = ActorSystem("Crawler")
   val actor = system.actorOf(Props[CostarCrawler])
-			
-  actor ! CostarCrawlRequest(esClient, rssURL)
+
+  import system.dispatcher
+  system.scheduler.schedule(0 milliseconds, 15 seconds, actor, CostarCrawlRequest(esClient, rssURL))
   
 }
