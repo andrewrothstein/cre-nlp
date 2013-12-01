@@ -1,0 +1,36 @@
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "my_html_analyzer": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "char_filter": [
+              "my_html_filter"
+            ]
+          }
+        },
+        "char_filter": {
+          "my_html_filter": {
+            "type": "html_strip"
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "webpages": {
+      "properties": {
+        "link": {
+          "type": "string",
+          "store": "yes"
+        },
+        "page": {
+          "type": "string",
+          "analyzer": "my_html_analyzer"
+        }
+      }
+    }
+  }
+}
