@@ -9,6 +9,8 @@ import com.sksamuel.elastic4s.source.ObjectSource
 import dispatch._
 import dispatch.Defaults._
 
+import scala.concurrent.duration._
+
 case class CrawledItem(
   rssURL: String,
   author: String,
@@ -19,7 +21,7 @@ case class CrawledItem(
 
 case class CrawlFailed(item: CrawledItem)
 
-case class CostarCrawlRequest(esClient: ElasticClient, rssURL: String)
+case class CostarCrawlRequest(esClient: ElasticClient, loc: String)
 
 class CostarCrawler extends Actor with ActorLogging {
 
@@ -31,13 +33,29 @@ class CostarCrawler extends Actor with ActorLogging {
     val r = esClient.sync.execute {
       get id link from "cre/webpages"
     }
-    log.info("hits for " + link + ": " + r.isExists())
     r.isExists()
   }
 
+  private def resolveRSSURL(loc :String) = { 
+	val suffix = if (loc.isEmpty) "" else "?m=" + loc
+	"http://www.costar.com/News/RSS/RSS.aspx" + suffix
+  }
+
+
   def receive = {
-    case CostarCrawlRequest(esClient, rssURL) => {
+    case CostarCrawlRequest(esClient, loc) => {
+      val rssURL = resolveRSSURL(loc)
       for (rss <- downloadAsXML(rssURL)) {
+
+        val ttl = Integer.parseInt(rss \ "channel" \ "ttl" text)
+        
+        if (ttl > 0) {
+          log.info("waiting " + ttl + " minutes for next ping against " + rssURL + "...")
+          context.system.scheduler.scheduleOnce(ttl minutes) {
+	    	  self ! CostarCrawlRequest(esClient, loc)
+	    	}
+        }
+        
         for (rssItem <- rss \\ "item") {
 
           val crawledItem = CrawledItem(
