@@ -8,10 +8,8 @@ import scala.concurrent.duration._
 
 object SimpleTextQuery extends App {
 
-	val r = SimpleApp.client.execute {
-//	  search in "logstash-2013.11.10" query "first"
-	  search in "cre" query "the news"
+	val r = SimpleApp.client.sync.execute {
+	  search in "cre" -> "webpages" query "JPMorgan" limit 2
 	}
-	Await.ready(r, 10 seconds)
-	println(r.value)
+	println(r)
 }

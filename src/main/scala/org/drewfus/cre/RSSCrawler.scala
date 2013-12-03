@@ -11,7 +11,7 @@ import dispatch.Defaults._
 
 import scala.concurrent.duration._
 
-case class CrawledItem(
+case class RSSCrawledItem(
   rssURL: String,
   author: String,
   pubDate: String,
@@ -19,11 +19,11 @@ case class CrawledItem(
   description: String,
   link: String)
 
-case class CrawlFailed(item: CrawledItem)
+case class RSSCrawlFailed(item: RSSCrawledItem)
 
-case class CostarCrawlRequest(esClient: ElasticClient, loc: String)
+case class RSSCrawlRequest(esClient: ElasticClient, rssURL: String)
 
-class CostarCrawler extends Actor with ActorLogging {
+class RSSCrawler extends Actor with ActorLogging {
 
   private def downloadAsXML(link: String) = Http(url(link) OK as.xml.Elem)
 
@@ -36,29 +36,23 @@ class CostarCrawler extends Actor with ActorLogging {
     r.isExists()
   }
 
-  private def resolveRSSURL(loc :String) = { 
-	val suffix = if (loc.isEmpty) "" else "?m=" + loc
-	"http://www.costar.com/News/RSS/RSS.aspx" + suffix
-  }
-
-
   def receive = {
-    case CostarCrawlRequest(esClient, loc) => {
-      val rssURL = resolveRSSURL(loc)
+    case RSSCrawlRequest(esClient, rssURL) => {
       for (rss <- downloadAsXML(rssURL)) {
 
-        val ttl = Integer.parseInt(rss \ "channel" \ "ttl" text)
+        val ttl = rss \ "channel" \ "ttl" text
+        val parsedTTL = if (ttl.isEmpty()) 30 else Integer.parseInt(ttl)
         
-        if (ttl > 0) {
-          log.info("waiting " + ttl + " minutes for next ping against " + rssURL + "...")
-          context.system.scheduler.scheduleOnce(ttl minutes) {
-	    	  self ! CostarCrawlRequest(esClient, loc)
+        if (parsedTTL > 0) {
+          log.info("waiting " + parsedTTL + " minutes for next ping against " + rssURL + "...")
+          context.system.scheduler.scheduleOnce(parsedTTL minutes) {
+	    	  self ! RSSCrawlRequest(esClient, rssURL)
 	    	}
         }
         
         for (rssItem <- rss \\ "item") {
 
-          val crawledItem = CrawledItem(
+          val crawledItem = RSSCrawledItem(
             rssURL,
             rssItem \ "author" text,
             rssItem \ "pubDate" text,
@@ -71,7 +65,7 @@ class CostarCrawler extends Actor with ActorLogging {
             val dl = downloadAsString(crawledItem.link)
             for (doc <- dl) {
               val esResponse = esClient.bulk {
-                index into "costar-rss-success" source ObjectSource(crawledItem)
+                index into "cre-rss-crawl-success" source ObjectSource(crawledItem)
                 index into "cre/webpages" id crawledItem.link fields ("page" -> doc)
               }
               for (r <- esResponse) {
@@ -84,9 +78,9 @@ class CostarCrawler extends Actor with ActorLogging {
             dl.onFailure {
               case _ =>
                 esClient.execute {
-                  index into "costar-rss-failures" source ObjectSource(crawledItem)
+                  index into "cre-rss-crawl-failure" source ObjectSource(crawledItem)
                 }
-                sender ! CrawlFailed(crawledItem)
+                sender ! RSSCrawlFailed(crawledItem)
             }
           }
         }
