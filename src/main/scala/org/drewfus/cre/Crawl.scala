@@ -31,8 +31,8 @@ object Crawl extends App {
       )
   
   val system = ActorSystem("RSSCrawler")
+  val actor = system.actorOf(Props[CostarCrawler])
   for (loc <- locations) {
-    val actor = system.actorOf(Props[CostarCrawler])
     actor ! CostarCrawlRequest(esClient, loc)
   }
 }

@@ -88,8 +88,6 @@ class CostarCrawler extends Actor with ActorLogging {
                 }
                 sender ! CrawlFailed(crawledItem)
             }
-          } else {
-            log.info("skipping " + crawledItem.link)
           }
         }
       }
