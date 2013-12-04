@@ -36,6 +36,8 @@ class RSSCrawler extends Actor with ActorLogging {
     r.isExists()
   }
 
+  private def fixLink(link :String) = link.replace("\t", "%20")
+  
   def receive = {
     case RSSCrawlRequest(esClient, rssURL) => {
       for (rss <- downloadAsXML(rssURL)) {
@@ -44,7 +46,7 @@ class RSSCrawler extends Actor with ActorLogging {
         val parsedTTL = if (ttl.isEmpty()) 30 else Integer.parseInt(ttl)
         
         if (parsedTTL > 0) {
-          log.info("waiting " + parsedTTL + " minutes for next ping against " + rssURL + "...")
+          log.debug("waiting " + parsedTTL + " minutes for next ping against " + rssURL + "...")
           context.system.scheduler.scheduleOnce(parsedTTL minutes) {
 	    	  self ! RSSCrawlRequest(esClient, rssURL)
 	    	}
@@ -58,7 +60,7 @@ class RSSCrawler extends Actor with ActorLogging {
             rssItem \ "pubDate" text,
             rssItem \ "title" text,
             rssItem \ "description" text,
-            rssItem \ "link" text)
+            fixLink(rssItem \ "link" text))
 
           if (!alreadyIndexedDoc(esClient, crawledItem.link)) {
 
