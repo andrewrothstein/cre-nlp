@@ -36,7 +36,10 @@ class RSSCrawler extends Actor with ActorLogging {
     r.isExists()
   }
 
-  private def fixLink(link :String) = link.replace("\t", "%20")
+  private def fixLink(link :String) = link.
+		  replace("\t", "%20").
+		  replace("origin-www-dc.costar.com", "www.costar.com").
+		  replace("seattle.costargroup.com", "www.costar.com")
   
   def receive = {
     case RSSCrawlRequest(esClient, rssURL) => {
@@ -63,11 +66,10 @@ class RSSCrawler extends Actor with ActorLogging {
             fixLink(rssItem \ "link" text))
 
           if (!alreadyIndexedDoc(esClient, crawledItem.link)) {
-
+        	log.info("downloading " + crawledItem.link)
             val dl = downloadAsString(crawledItem.link)
             for (doc <- dl) {
               val esResponse = esClient.bulk {
-                index into "cre-rss-crawl-success" source ObjectSource(crawledItem)
                 index into "cre/webpages" id crawledItem.link fields ("page" -> doc)
               }
               for (r <- esResponse) {
@@ -82,8 +84,10 @@ class RSSCrawler extends Actor with ActorLogging {
                 esClient.execute {
                   index into "cre-rss-crawl-failure" source ObjectSource(crawledItem)
                 }
-                sender ! RSSCrawlFailed(crawledItem)
+                log.warning("failed to download: " + crawledItem.link)
             }
+          } else {
+            log.debug("skipping " + crawledItem.link)
           }
         }
       }
