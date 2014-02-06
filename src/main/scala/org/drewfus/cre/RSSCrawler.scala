@@ -39,7 +39,9 @@ class RSSCrawler extends Actor with ActorLogging {
   private def fixLink(link :String) = link.
 		  replace("\t", "%20").
 		  replace("origin-www-dc.costar.com", "www.costar.com").
-		  replace("seattle.costargroup.com", "www.costar.com")
+		  replace("origin-www-vi.costar.com", "www.costar.com").
+		  replace("seattle.costargroup.com", "www.costar.com").
+		  replace("65.210.23.201", "www.costar.com")
   
   def receive = {
     case RSSCrawlRequest(esClient, rssURL) => {
