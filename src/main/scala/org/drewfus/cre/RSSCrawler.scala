@@ -25,6 +25,8 @@ case class RSSCrawlRequest(esClient: ElasticClient, rssURL: String)
 
 class RSSCrawler extends Actor with ActorLogging {
 
+  implicit val duration = 1 second
+  
   private def downloadAsXML(link: String) = Http(url(link) OK as.xml.Elem)
 
   private def downloadAsString(link: String) = Http(url(link) OK as.String)

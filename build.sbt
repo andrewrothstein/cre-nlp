@@ -2,12 +2,16 @@ name := "elastic4s-fiddle"
 
 version := "0.1"
 
-resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers ++= Seq(
+ "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
+ "Sonatype Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
+)
 
 libraryDependencies ++= Seq(
- "com.sksamuel.elastic4s" % "elastic4s_2.10" % "0.90.5.2",
+"com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.1.3",
+ "com.sksamuel.elastic4s" %% "elastic4s" % "1.0.0.0",
  "net.databinder.dispatch" %% "dispatch-core" % "0.11.0",
- "com.typesafe.akka" %% "akka-actor" % "2.2.3",
+ "com.typesafe.akka" %% "akka-actor" % "2.3.0",
  "org.apache.tika" % "tika-parsers" % "1.4",
  "edu.stanford.nlp" % "stanford-corenlp" % "3.3.0",
  "edu.stanford.nlp" % "stanford-corenlp" % "3.3.0" classifier "models"

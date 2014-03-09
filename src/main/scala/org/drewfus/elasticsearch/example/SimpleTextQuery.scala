@@ -8,6 +8,8 @@ import scala.concurrent.duration._
 
 object SimpleTextQuery extends App {
 
+  implicit val duration = 1 second
+  
 	val r = SimpleApp.client.sync.execute {
 	  search in "cre" -> "webpages" query "JPMorgan" limit 2
 	}
