@@ -93,7 +93,7 @@ class RSSCrawler extends Actor with ActorLogging {
             dl.onFailure {
               case _ =>
                 esClient.execute {
-                  index into "cre-rss-crawl-failure" source ObjectSource(crawledItem)
+                  index into "cre-rss-crawl-failure" doc ObjectSource(crawledItem)
                 }
                 log.warning("failed to download: " + crawledItem.link)
             }
