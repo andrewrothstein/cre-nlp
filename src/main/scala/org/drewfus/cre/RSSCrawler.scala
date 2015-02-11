@@ -73,15 +73,17 @@ class RSSCrawler extends Actor with ActorLogging {
         	log.info("downloading " + crawledItem.link)
             val dl = downloadAsString(crawledItem.link)
             for (doc <- dl) {
-              val esResponse = esClient.bulk {
-                index into "cre/webpages" id crawledItem.link fields (
+              val esResponse = esClient.execute {
+                bulk {
+                  index into "cre/webpages" id crawledItem.link fields (
                     "author" -> crawledItem.author,
                     "pubDate" -> crawledItem.pubDate,
                     "title" -> crawledItem.title,
                     "description" -> crawledItem.description,
                     "link" -> crawledItem.link,
                     "page" -> doc
-                    )
+                  )
+                }
               }
               for (r <- esResponse) {
                 log.info("downloaded and indexed " + crawledItem.title)
